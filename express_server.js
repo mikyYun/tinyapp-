@@ -1,3 +1,4 @@
+const { response } = require('express');
 const express = require('express');
 const app = express();
 const PORT = 8080;
@@ -15,7 +16,12 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+// Adding routes
 app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
 });
 
+// Sending HTML
+app.get('/hello', (request, response) => {
+  response.send('<html><body>Hello <b>World</b></body></html>\n')
+})

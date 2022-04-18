@@ -1,3 +1,8 @@
+// body-parser library will convert the request body from a Buffer into string that we can read.
+// It will then add the data to the request objcet under the key body
+// the data in the 'input' filed will be available to us in the request.body.longURL variable that we can store in 'urlDatabase' object
+const bodyParser = require('body-parser');
+
 const express = require('express');
 const app = express();
 const PORT = 8080;
@@ -45,6 +50,16 @@ app.get("/urls/:shortURL", (request, response) => {
   response.render("urls_show", templateVars);
 });
 
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.post('/urls', (request, response) => {
+  console.log(request.body);
+  response.send('OK');
+})
 
 
-
+function generateRandomString () => {
+  let randomString = Math.random().toString(36)
+  return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6)
+}
+generateRandomString();

@@ -2,7 +2,8 @@ const express = require('express');
 const app = express();
 const PORT = 8080;
 
-app.set('view engine', 'ejs');
+// app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 
 const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
@@ -28,7 +29,12 @@ app.get('/hello', (request, response) => {
 })
 
 // new route handler for '/urls'. and pass the url data to our template by using .render()
-app.get('/urls/', (request, response) => {
+app.get('/urls', (request, response) => {
   const templateVars = { urls: urlDatabase };
   response.render('urls_index', templateVars);
+});
+
+app.get("/urls/:shortURL", (request, response) => {
+  const templateVars = { shortURL: request.params.shortURL, longURL: request.params.shortURL };
+  response.render("urls_show", templateVars);
 });

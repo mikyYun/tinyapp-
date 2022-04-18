@@ -34,7 +34,17 @@ app.get('/urls', (request, response) => {
   response.render('urls_index', templateVars);
 });
 
+// The order of route definition matters.
+// GET /urls/new route needs to be difined before the :id. Routes defined earlier will take precedence -> if we place this route after :id, any calls to /urls/new will be handled by app.get('/urls/:id', ...) because Express will think that 'new' is a route parameter
+app.get("/urls/new", (request, response) => {
+  response.render("urls_new");
+});
+
 app.get("/urls/:shortURL", (request, response) => {
-  const templateVars = { shortURL: request.params.shortURL, longURL: request.params.shortURL };
+  const templateVars = { shortURL: request.params.shortURL, longURL: request.params.longURL };
   response.render("urls_show", templateVars);
 });
+
+
+
+

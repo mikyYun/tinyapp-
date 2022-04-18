@@ -4,7 +4,6 @@ const PORT = 8080;
 
 app.set('view engine', 'ejs');
 
-
 const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com'
@@ -27,3 +26,9 @@ app.get('/urls.json', (request, response) => {
 app.get('/hello', (request, response) => {
   response.send('<html><body>Hello <b>World</b></body></html>\n')
 })
+
+// new route handler for '/urls'. and pass the url data to our template by using .render()
+app.get('/urls/', (request, response) => {
+  const templateVars = { urls: urlDatabase };
+  response.render('urls_index', templateVars);
+});

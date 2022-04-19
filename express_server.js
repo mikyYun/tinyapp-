@@ -83,7 +83,33 @@ app.get("/u/:shortURL", (request, response) => {
 app.post('/urls/:shortURL/delete', (request, response) => {
   // console.log(request.params, "REQUEST")
   // console.log(urlDatabase)
-  console.log(request.params)
+  // console.log(request.params)
   delete urlDatabase[request.params.shortURL]
   response.redirect('/urls')
+})
+
+app.post('/urls/:shortURL/edit', (request, response) => {
+  // console.log(request.params, "REQUEST")
+  // console.log(urlDatabase)
+  // console.log(request.params)
+  console.log(request.params)
+  const shortURL = request.params.shortURL
+  response.redirect(`/urls/${shortURL}`)
+})
+
+app.post('/urls/:id', (request, response) => {
+  console.log("TEST", request.params.id)
+  const shortURL = request.params.id
+  // const edit
+  // console.log("TEST", request)
+  console.log("FIRST", urlDatabase)
+  const longURL = request.body.longURL
+  urlDatabase[shortURL] = longURL
+  console.log("SECOND", urlDatabase)
+
+  // const newLongURL = request.body.longURL
+  // const newShortURL = generateRandomString()
+  // console.log(newShortURL);
+  // urlDatabase[newShortURL] = newLongURL;
+  response.redirect('/urls/')
 })

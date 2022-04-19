@@ -2,7 +2,7 @@
 // It will then add the data to the request objcet under the key body
 // the data in the 'input' filed will be available to us in the request.body.longURL variable that we can store in 'urlDatabase' object
 const bodyParser = require('body-parser');
-const { response } = require('express');
+// const { response } = require('express');
 
 const express = require('express');
 const app = express();
@@ -12,8 +12,8 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  'b2xVn2': 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com'
+  // 'b2xVn2': 'http://www.lighthouselabs.ca',
+  // '9sm5xK': 'http://www.google.com'
 };
 
 app.get('/', (request, response) => {
@@ -47,17 +47,17 @@ app.get("/urls/new", (request, response) => {
 });
 
 app.get("/urls/:shortURL", (request, response) => {
-  const templateVars = { shortURL: request.params.shortURL, longURL: request.params.longURL };
+  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
   response.render("urls_show", templateVars);
+  // response.render("./partials/urls_show_copy.html", templateVars);
 });
 
 app.use(bodyParser.urlencoded({extended: true}));
 
 function generateRandomString () {
-  let randomString = Math.random().toString(36)
+  let randomString = Math.random().toString(32)
   return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6)
 }
-
 
 app.post('/urls', (request, response) => {
   // console.log(request.body.longURL);
@@ -73,6 +73,17 @@ app.post('/urls', (request, response) => {
 
 app.get("/u/:shortURL", (request, response) => {
   const longURL = urlDatabase[request.params.shortURL]
+  if (!longURL) {
+    response.sendStatus(404)
+  }
   response.redirect(longURL);
   // console.log(request.params);
 });
+
+app.post('/urls/:shortURL/delete', (request, response) => {
+  // console.log(request.params, "REQUEST")
+  // console.log(urlDatabase)
+  console.log(request.params)
+  delete urlDatabase[request.params.shortURL]
+  response.redirect('/urls')
+})

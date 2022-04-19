@@ -2,6 +2,7 @@
 // It will then add the data to the request objcet under the key body
 // the data in the 'input' filed will be available to us in the request.body.longURL variable that we can store in 'urlDatabase' object
 const bodyParser = require('body-parser');
+const { response } = require('express');
 
 const express = require('express');
 const app = express();
@@ -52,14 +53,26 @@ app.get("/urls/:shortURL", (request, response) => {
 
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.post('/urls', (request, response) => {
-  console.log(request.body);
-  response.send('OK');
-})
-
-
-function generateRandomString () => {
+function generateRandomString () {
   let randomString = Math.random().toString(36)
   return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6)
 }
-generateRandomString();
+
+
+app.post('/urls', (request, response) => {
+  // console.log(request.body.longURL);
+  const newLongURL = request.body.longURL
+  const newShortURL = generateRandomString()
+  // console.log(newShortURL);
+  urlDatabase[newShortURL] = newLongURL;
+  console.log(urlDatabase)
+  // response.send('OK');
+  response.redirect(`/urls/${newShortURL}`)
+
+})
+
+app.get("/u/:shortURL", (request, response) => {
+  const longURL = urlDatabase[request.params.shortURL]
+  response.redirect(longURL);
+  // console.log(request.params);
+});

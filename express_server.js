@@ -1,6 +1,6 @@
 
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
 
 const express = require('express');
 const app = express();
@@ -9,10 +9,10 @@ const PORT = 8080;
 
 app.set("view engine", "ejs");
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const urlDatabase = {};
-
+const users = {};
 app.get('/', (request, response) => {
   response.send('Hello!');
 });
@@ -26,14 +26,14 @@ app.get('/urls.json', (request, response) => {
 });
 
 app.get('/hello', (request, response) => {
-  response.send('<html><body>Hello <b>World</b></body></html>\n')
-})
+  response.send('<html><body>Hello <b>World</b></body></html>\n');
+});
 
 app.get('/urls', (request, response) => {
   const templateVars = {
     urls: urlDatabase,
     username: request.cookies['username']
-  }
+  };
   response.render('urls_index', templateVars);
 });
 
@@ -41,12 +41,13 @@ app.get("/urls/new", (request, response) => {
   const templateVars = {
     urls: urlDatabase,
     username: request.cookies['username']
-  }
+  };
   response.render("urls_new", templateVars);// rendering
 });
 
 app.get("/urls/:shortURL", (request, response) => {
-  const templateVars = { shortURL: request.params.shortURL,
+  const templateVars = {
+    shortURL: request.params.shortURL,
     longURL: urlDatabase[request.params.shortURL],
     username: request.cookies['username']
   };
@@ -54,60 +55,92 @@ app.get("/urls/:shortURL", (request, response) => {
 });
 
 app.get('/urls/logout', (request, response) => {
-  console.log("TEST", request.cookies)
+  console.log("TEST", request.cookies);
   response.render("/urls_logout");
 
-})
+});
 
-function generateRandomString () {
-  let randomString = Math.random().toString(32)
-  return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6)
+function generateRandomString() {
+  let randomString = Math.random().toString(32);
+  return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6);
 }
 
 app.post('/urls', (request, response) => {
-  const newLongURL = request.body.longURL
-  const newShortURL = generateRandomString()
+  const newLongURL = request.body.longURL;
+  const newShortURL = generateRandomString();
   urlDatabase[newShortURL] = newLongURL;
-  console.log(urlDatabase)
-  response.redirect(`/urls/${newShortURL}`)
+  console.log(urlDatabase);
+  response.redirect(`/urls/${newShortURL}`);
 
-})
+});
 
 app.get("/u/:shortURL", (request, response) => {
-  const longURL = urlDatabase[request.params.shortURL]
+  const longURL = urlDatabase[request.params.shortURL];
   if (!longURL) {
-    response.sendStatus(404)
+    response.sendStatus(404);
   }
   response.redirect(longURL);
 });
 
 app.post('/urls/:shortURL/delete', (request, response) => {
-  delete urlDatabase[request.params.shortURL]
-  response.redirect('/urls')
-})
+  delete urlDatabase[request.params.shortURL];
+  response.redirect('/urls');
+});
 
 app.post('/urls/:shortURL/edit', (request, response) => {
-  console.log(request.params)
-  const shortURL = request.params.shortURL
-  response.redirect(`/urls/${shortURL}`)
-})
+  console.log(request.params);
+  const shortURL = request.params.shortURL;
+  response.redirect(`/urls/${shortURL}`);
+});
 
 app.post('/urls/:id', (request, response) => {
-  
-  const shortURL = request.params.id
-  const longURL = request.body.longURL
-  urlDatabase[shortURL] = longURL
-  response.redirect('/urls/')
-})
+
+  const shortURL = request.params.id;
+  const longURL = request.body.longURL;
+  urlDatabase[shortURL] = longURL;
+  response.redirect('/urls/');
+});
 
 app.post('/login', (request, response) => {
-  const newUserId = request.body.username
-  response.cookie('username', newUserId)
-  response.redirect('/urls')
-})
+  const newUserId = request.body.username;
+  response.cookie('username', newUserId);
+  response.redirect('/urls');
+});
 app.post('/logout', (request, response) => {
-  console.log("TEST", request.cookies)
-  response.clearCookie('username')
+  console.log("TEST", request.cookies);
+  response.clearCookie('username');
 
-  response.redirect('/urls/urls_logout')
+  response.redirect('/urls/urls_logout');
+});
+
+app.get('/register', (request, response) => {
+  console.log(request.cookies);
+  const templateVars = {
+    username: request.cookies['username']
+  };
+  response.render("urls_registration", templateVars);
+});
+
+app.post('/register', (request, response) => {
+  // console.log(request)
+  // body: { email: 'email@mail.com', password: 'pssss' },
+  const newRandomID = generateRandomString()
+  const getEmail = request.body.email
+  const getPassword = request.body.password
+  // console.log(newRandomID)
+  const newUsersObject = users[newRandomID]
+  users[newRandomID] = {
+    id: newRandomID,
+    email: getEmail,
+    password: getPassword
+  }
+  response.cookie('user_id', newRandomID);
+  console.log(request.cookies)
+  // newUsersObject['id'] = newRandomID;
+  // newUsersObject['email'] = getEmail;
+  // newUsersObject['password'] = getPassword;
+  // console.log(newUsersObject)
+  console.log(users)
+
+  response.redirect('/urls')
 })

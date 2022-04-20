@@ -64,6 +64,21 @@ app.get("/urls/:shortURL", (request, response) => {
   // response.render("./partials/urls_show_copy.html", templateVars);
 });
 
+// app.get('/urls/login', (request, response) => {
+//   console.log("TEST", request.cookies)
+
+//   // response.redirect('/urls')
+//   response.render("/urls_logout");
+
+// })
+
+app.get('/urls/logout', (request, response) => {
+  console.log("TEST", request.cookies)
+
+  // response.redirect('/urls')
+  response.render("/urls_logout");
+
+})
 
 function generateRandomString () {
   let randomString = Math.random().toString(32)
@@ -127,25 +142,36 @@ app.post('/urls/:id', (request, response) => {
   response.redirect('/urls/')
 })
 
+// app.get('/login', (request, response) => {
+//   console.log(request)
+// })
+
 app.post('/login', (request, response) => {
   // console.log(request.body.username)
   const newUserId = request.body.username
-  // response.cookie('username', newUserId)
-  console.log('username!!!!')
+  response.cookie('username', newUserId)
+  // console.log(newUserId)
   // console.log(response.cookie(newUserId))
   response.redirect('/urls')
 })
-// app.get('/logout', (request, response) => {
-//   console.log("TEST", request.cookies)
-// })
 app.post('/logout', (request, response) => {
-  console.log(request.body.username)
+  console.log("TEST", request.cookies)
+  response.clearCookie('username')
+
+  response.redirect('/urls/urls_logout')
+})
+// app.post('/logout', (request, response) => {
+  // console.log(request.body.username)
+  // console.log(request.cookies)
+  // response.clearCookie('username')
+  // response.clearCookeis(request.cookies.username)
+  // console.log("cookie removed!!")
   // const newUserId = request.body.username
   // response.cookie('username', newUserId)
   // console.log('username!!!!')
   // console.log(response.cookie(newUserId))
-  response.redirect('/urls')
-})
+  // response.redirect('/urls')
+// })
 // app.use(cookieParser());
 
 

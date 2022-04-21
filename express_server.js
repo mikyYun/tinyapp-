@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const express = require('express');
 const app = express();
 const PORT = 8080;
-
+const {generateRandomString} = require('./helpers')
 app.set("view engine", "ejs");
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false}))
@@ -18,6 +18,8 @@ app.listen(PORT, () => {
 
 app.get('/urls', (request, response) => {
   console.log("GET/URLS")
+  console.log(request)
+  console.log("DATABASE", urlDatabase)
   const userID = request.cookies['user_id']
   const user = users[userID]
 
@@ -31,9 +33,8 @@ app.get('/urls', (request, response) => {
 
 app.get("/urls/new", (request, response) => {
   console.log("GET/URLS NEW")
-  console.log(request.cookies.user_id)
   if (!request.cookies.user_id) {
-    response.redirect('/login')
+    return response.redirect('/login')
   }
   const userID = request.cookies['user_id']
   const user = users[userID]
@@ -51,17 +52,17 @@ app.get("/urls/:shortURL", (request, response) => {
   console.log("GET/URLS:SHORTURL")
   const userID = request.cookies['user_id']
   const user = users[userID]
-
+  const shorturl = request.params.shortURL
   const templateVars = {
-    shortURL: request.params.shortURL,
-    longURL: urlDatabase[request.params.shortURL],
+    shortURL: shorturl,
+    longURL: urlDatabase[shorturl].longURL,
     user: user
   };
+  console.log("DATABASE", urlDatabase[shorturl].longURL)
   response.render("urls_show", templateVars);
 });
 
 app.get('/login', (request, response) => {
-  console.log(users)
   console.log("GET/LOGIN")
   const userID = request.cookies['user_id']
   const user = users[userID]
@@ -96,30 +97,39 @@ app.get('/register', (request, response) => {
   response.render("urls_registration", templateVars);
 });
 
-function generateRandomString() {
-  let randomString = Math.random().toString(32);
-  return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6);
-}
+// function generateRandomString() {
+//   let randomString = Math.random().toString(32);
+//   return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6);
+// }
 
 app.post('/urls', (request, response) => {
-  console.log("POST/URLS")
+  const userID = request.cookies.user_id
   const newLongURL = request.body.longURL;
   const newShortURL = generateRandomString();
-  urlDatabase[newShortURL] = newLongURL;
+  urlDatabase[newShortURL] = {
+    longURL: newLongURL,
+    userID: userID
+  };
+  // console.log(urlDatabase)
   response.redirect(`/urls/${newShortURL}`);
 
 });
 
+const emailChecker = (email, users) => {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return true
+    }
+  }
+  return false
+}
 
-
-
+////////////////////////////
 app.post('/login', (request, response) => {
   console.log("POST/LOGIN")
   for (const existUserId in users) {
       const userID = users[existUserId]
-    if (users[existUserId].email === request.body.email) {
-      console.log(userID.password === request.body.password)
-      console.log(userID.email === request.body.email)
+
       if (userID.password === request.body.password &&
         userID.email === request.body.email ) {
             response.cookie('user_id', existUserId);
@@ -128,10 +138,10 @@ app.post('/login', (request, response) => {
       if (userID.password !== request.body.password || userID.email !== request.body.email) {
         return response.status(406).redirect('https://http.cat/406')
       }
-    }
   }
       return response.status(409). redirect('https://httpstatusdogs.com/409-conflict')
 });
+
 
 
 app.post('/logout', (request, response) => {
@@ -139,17 +149,15 @@ app.post('/logout', (request, response) => {
   response.clearCookie('user_id');
   response.redirect('/logout');
 });
-
+// V1 : set cookies at the registeration
 app.post('/register', (request, response) => {
   console.log("POST/REGISTER")
   const newRandomID = generateRandomString()
   const submittedEmail = request.body.email
   const submittedPassword = request.body.password
-
   if (!submittedEmail || !submittedPassword) {
     return response.status(400).redirect('https://httpstatusdogs.com/404-not-found')
   }
-// 
   for (const existUserId in users) {
     if (users[existUserId].email === submittedEmail) {
       return response.status(409). redirect('https://httpstatusdogs.com/409-conflict')
@@ -161,10 +169,11 @@ app.post('/register', (request, response) => {
     email: submittedEmail,
     password: submittedPassword
   }
-  console.log(users)
   response.cookie('user_id', newRandomID);
-  response.redirect('/login')
+  response.redirect('/urls')
 })
+
+
 
 app.post('/urls/:shortURL/delete', (request, response) => {
   console.log("POST/URLS:SHORTURL,delete")
@@ -182,6 +191,6 @@ app.post('/urls/:id', (request, response) => {
   console.log("POST/URLS:ID")
   const shortURL = request.params.id;
   const longURL = request.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL]['longURL'] = longURL;
   response.redirect('/urls/');
 });

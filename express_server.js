@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const express = require('express');
 const app = express();
 const PORT = 8080;
-const {generateRandomString} = require('./helpers')
+const {generateRandomString, userIDSeeker} = require('./helpers')
 app.set("view engine", "ejs");
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false}))
@@ -16,10 +16,19 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+const urlsForUser = (id, urlDatabase) => {
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      return urlDatabase[shortURL].longURL
+    }
+  }
+}
+
 app.get('/urls', (request, response) => {
   console.log("GET/URLS")
-  console.log(request)
-  console.log("DATABASE", urlDatabase)
+  // console.log(request)
+  // console.log("USERS", users)
+  // console.log("Database", urlDatabase)
   const userID = request.cookies['user_id']
   const user = users[userID]
 
@@ -58,7 +67,7 @@ app.get("/urls/:shortURL", (request, response) => {
     longURL: urlDatabase[shorturl].longURL,
     user: user
   };
-  console.log("DATABASE", urlDatabase[shorturl].longURL)
+  // console.log("DATABASE", urlDatabase[shorturl].longURL)
   response.render("urls_show", templateVars);
 });
 
@@ -142,8 +151,6 @@ app.post('/login', (request, response) => {
       return response.status(409). redirect('https://httpstatusdogs.com/409-conflict')
 });
 
-
-
 app.post('/logout', (request, response) => {
   console.log("POST/LOGOUT")
   response.clearCookie('user_id');
@@ -173,18 +180,37 @@ app.post('/register', (request, response) => {
   response.redirect('/urls')
 })
 
-
-
+// const userIDSeeker = (currentUserID, urlDatabase) => {
+//   for (const shortURL in urlDatabase) {
+//     if (urlDatabase[shortURL]['userID'] === currentUserID) {
+//       return true
+//     }
+//   }
+// }
 app.post('/urls/:shortURL/delete', (request, response) => {
   console.log("POST/URLS:SHORTURL,delete")
-  delete urlDatabase[request.params.shortURL];
-  response.redirect('/urls');
+  console.log(request.cookies)
+  console.log(urlDatabase)
+  const currentUserID = request.cookies.user_id
+
+  if (userIDSeeker(currentUserID, urlDatabase)) {
+    delete urlDatabase[request.params.shortURL];
+    return response.redirect('/urls');
+  } else {
+    return response.status(400).redirect('https://http.cat/400')
+  }
 });
 
 app.post('/urls/:shortURL/edit', (request, response) => {
   console.log("POST/URLS:SHORTURL")
-  const shortURL = request.params.shortURL;
-  response.redirect(`/urls/${shortURL}`);
+  const currentUserID = request.cookies.user_id
+
+  if (userIDSeeker(currentUserID, urlDatabase)) {
+    const shortURL = request.params.shortURL;
+    return response.redirect(`/urls/${shortURL}`);
+  } else {
+    return response.status(400).redirect('https://http.cat/400')
+  }
 });
 
 app.post('/urls/:id', (request, response) => {

@@ -4,7 +4,13 @@ const generateRandomString = () => {
   let randomString = Math.random().toString(32);
   return randomString.length === 13 ? randomString.slice(7) : randomString.slice(6);
 }
-
+const userIDSeeker = (currentUserID, urlDatabase) => {
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL]['userID'] === currentUserID) {
+      return true
+    }
+  }
+}
 // const existUserChecker = (req, res, obj) => {
 //   for (const user in obj) {
 //     const userID = obj[user]
@@ -43,4 +49,4 @@ const generateRandomString = () => {
 //   }
 // }
 
-module.exports = { generateRandomString }
+module.exports = { generateRandomString, userIDSeeker }

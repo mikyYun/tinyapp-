@@ -1,13 +1,15 @@
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session')
 const bcrypt = require('bcryptjs');
-
 const express = require('express');
 const app = express();
 const PORT = 8080;
-const { generateRandomString, userIDSeeker } = require('./helpers');
+const { generateRandomString, userIDSeeker, getUserByEmail } = require('./helpers');
 
 app.set("view engine", "ejs");
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["securedKeys"],
+}))
 app.use(express.urlencoded({ extended: false }));
 
 const urlDatabase = {};
@@ -16,47 +18,34 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-const urlsForUser = (id, urlDatabase) => {
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      return urlDatabase[shortURL].longURL;
-    }
-  }
-};
-
 app.get('/urls', (request, response) => {
   console.log("GET/URLS");
-  const userID = request.cookies['user_id'];
+  const userID = request.session['user_id'];
   const user = users[userID];
-
   const templateVars = {
     urls: urlDatabase,
     user: user,
   };
   response.render('urls_index', templateVars);
-
 });
 
 app.get("/urls/new", (request, response) => {
   console.log("GET/URLS NEW");
-  if (!request.cookies.user_id) {
+  if (!request.session.user_id) {
     return response.redirect('/login');
   }
-  const userID = request.cookies['user_id'];
+  const userID = request.session['user_id'];
   const user = users[userID];
-
   const templateVars = {
     urls: urlDatabase,
     user: user
   };
-  response.render("urls_new", templateVars);// rendering
-
-
+  response.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (request, response) => {
   console.log("GET/URLS:SHORTURL");
-  const userID = request.cookies['user_id'];
+  const userID = request.session['user_id'];
   const user = users[userID];
   const shorturl = request.params.shortURL;
   const templateVars = {
@@ -69,7 +58,7 @@ app.get("/urls/:shortURL", (request, response) => {
 
 app.get('/login', (request, response) => {
   console.log("GET/LOGIN");
-  const userID = request.cookies['user_id'];
+  const userID = request.session['user_id'];
   const user = users[userID];
   const templateVars = {
     user: user
@@ -80,7 +69,6 @@ app.get('/login', (request, response) => {
 app.get('/logout', (request, response) => {
   console.log("GET/LOGOUT");
   response.redirect("/urls");
-
 });
 
 app.get("/u/:shortURL", (request, response) => {
@@ -94,7 +82,7 @@ app.get("/u/:shortURL", (request, response) => {
 
 app.get('/register', (request, response) => {
   console.log("GET/REGISTER");
-  const userID = request.cookies['user_id'];
+  const userID = request.session['user_id'];
   const user = users[userID];
   const templateVars = {
     user: user
@@ -103,7 +91,7 @@ app.get('/register', (request, response) => {
 });
 
 app.post('/urls', (request, response) => {
-  const userID = request.cookies.user_id;
+  const userID = request.session.user_id;
   const newLongURL = request.body.longURL;
   const newShortURL = generateRandomString();
   urlDatabase[newShortURL] = {
@@ -111,17 +99,7 @@ app.post('/urls', (request, response) => {
     userID: userID
   };
   response.redirect(`/urls/${newShortURL}`);
-
 });
-
-const emailChecker = (email, users) => {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return true;
-    }
-  }
-  return false;
-};
 
 app.post('/login', (request, response) => {
   console.log("POST/LOGIN");
@@ -130,10 +108,9 @@ app.post('/login', (request, response) => {
     const hashedPassword = userID.password
     const userPassword = request.body.password
     const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword) // true or false
-    console.log(bcryptPasswordCheck)
     if (bcryptPasswordCheck &&
       userID.email === request.body.email) {
-      response.cookie('user_id', existUserId);
+      request.session['user_id'] = existUserId
       return response.redirect('/urls');
     }
   }
@@ -142,7 +119,8 @@ app.post('/login', (request, response) => {
 
 app.post('/logout', (request, response) => {
   console.log("POST/LOGOUT");
-  response.clearCookie('user_id');
+  response.clearCookie('session');
+  request.session = null;
   response.redirect('/logout');
 });
 
@@ -151,34 +129,27 @@ app.post('/register', (request, response) => {
   const newRandomID = generateRandomString();
   const submittedEmail = request.body.email;
   const submittedPassword = request.body.password;
-
   if (!submittedEmail || !submittedPassword) {
     return response.status(400).redirect('https://httpstatusdogs.com/404-not-found');
   }
-  for (const existUserId in users) {
-    if (users[existUserId].email === submittedEmail) {
-      return response.status(409).redirect('https://httpstatusdogs.com/409-conflict');
-    }
+  if (getUserByEmail(submittedEmail, users) !== false) {
+    console.log(getUserByEmail(submittedEmail, users))
+    return response.status(409).redirect('https://httpstatusdogs.com/409-conflict');
   }
-  const hashedPssword = bcrypt.hashSync(submittedPassword, 10);
-  console.log(hashedPssword)
 
+  const hashedPssword = bcrypt.hashSync(submittedPassword, 10);// hashedPassword
   users[newRandomID] = {
     id: newRandomID,
     email: submittedEmail,
     password: hashedPssword
   };
-  console.log(users)
-  response.cookie('user_id', newRandomID);
+  request.session['user_id'] = newRandomID
   response.redirect('/urls');
 });
 
 app.post('/urls/:shortURL/delete', (request, response) => {
   console.log("POST/URLS:SHORTURL,delete");
-  console.log(request.cookies);
-  console.log(urlDatabase);
   const currentUserID = request.cookies.user_id;
-
   if (userIDSeeker(currentUserID, urlDatabase)) {
     delete urlDatabase[request.params.shortURL];
     return response.redirect('/urls');
@@ -190,7 +161,6 @@ app.post('/urls/:shortURL/delete', (request, response) => {
 app.post('/urls/:shortURL/edit', (request, response) => {
   console.log("POST/URLS:SHORTURL");
   const currentUserID = request.cookies.user_id;
-
   if (userIDSeeker(currentUserID, urlDatabase)) {
     const shortURL = request.params.shortURL;
     return response.redirect(`/urls/${shortURL}`);

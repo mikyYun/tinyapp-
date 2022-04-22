@@ -1,18 +1,20 @@
 const cookieSession = require('cookie-session');
 const express = require('express');
 const methodOverride = require('method-override');
+const serve = require('express-static')
 const { generateRandomString, userIDSeeker, getUserByEmail } = require('./helpers');
 const bcrypt = require('bcryptjs');
 const PORT = 8080;
 
 const app = express();
-app.use(methodOverride('_method'))
+app.use(methodOverride('_method'));
 app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'session',
   keys: ["securedKeys"],
 }));
 app.use(express.urlencoded({ extended: false }));
+app.use(express.static('public'))
 
 const urlDatabase = {};
 const users = {};
@@ -43,6 +45,7 @@ app.get("/urls/new", (request, response) => {
     user: user
   };
   response.render("urls_new", templateVars);
+  console.log()
 });
 
 app.get("/urls/:shortURL", (request, response) => {
@@ -75,8 +78,6 @@ app.get('/logout', (request, response) => {
 
 app.get("/u/:shortURL", (request, response) => {
   console.log("GET/u/SHORTURL");
-  console.log(request.params.shortURL)
-  console.log(urlDatabase[request.params.shortURL])
   const longURL = urlDatabase[request.params.shortURL]['longURL'];
   if (!longURL) {
     response.sendStatus(404);
@@ -111,7 +112,8 @@ app.post('/login', (request, response) => {
     const userID = users[existUserId];
     const hashedPassword = userID.password;
     const userPassword = request.body.password;
-    const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword); // true or false
+    // true or false
+    const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword); 
     if (bcryptPasswordCheck &&
       userID.email === request.body.email) {
       request.session['user_id'] = existUserId;
@@ -140,8 +142,8 @@ app.post('/register', (request, response) => {
     console.log(getUserByEmail(submittedEmail, users));
     return response.status(409).redirect('https://httpstatusdogs.com/409-conflict');
   }
-
-  const hashedPssword = bcrypt.hashSync(submittedPassword, 10);// hashedPassword
+  // hashedPassword
+  const hashedPssword = bcrypt.hashSync(submittedPassword, 10);
   users[newRandomID] = {
     id: newRandomID,
     email: submittedEmail,
@@ -153,9 +155,9 @@ app.post('/register', (request, response) => {
 
 app.post('/urls/:shortURL/delete', (request, response) => {
   console.log("POST/URLS:SHORTURL,delete");
-  console.log("SESSION is: ", request.session.user_id)
-  console.log(urlDatabase)
-  console.log(users)
+  console.log("SESSION is: ", request.session.user_id);
+  console.log(urlDatabase);
+  console.log(users);
   const shortURL = request.params.shortURL;
   const currentUserID = request.session.user_id;
   if (userIDSeeker(currentUserID, urlDatabase)) {

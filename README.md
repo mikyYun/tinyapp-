@@ -4,6 +4,7 @@
 - if logout at any point, user cannot see details
 
 ## Final Product
+Register
 
 
 
@@ -23,7 +24,7 @@
 
 #### Login
 - if email or password is not correct, redirect error
-- if submitted email is not in data, redirect error
+- if submitted email is not in data, redirect register
 - once successfully login, redirect to /urls page
 
 #### My URLs

@@ -108,12 +108,18 @@ app.post('/urls', (request, response) => {
 
 app.post('/login', (request, response) => {
   console.log("POST/LOGIN");
+  if (Object.keys(users).length === 0) {
+    return response.redirect('/register');
+  }
   for (const existUserId in users) {
     const userID = users[existUserId];
     const hashedPassword = userID.password;
     const userPassword = request.body.password;
     // true or false
     const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword); 
+    if (userID.email !== request.body.email) {
+    return response.redirect('/register');
+    }
     if (bcryptPasswordCheck &&
       userID.email === request.body.email) {
       request.session['user_id'] = existUserId;

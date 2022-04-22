@@ -31,13 +31,13 @@
               <td><%= urls[url].longURL %></td>
               <td>
                 <form method="POST" action="/urls/<%= url %>/edit">
-                  <button class='btn btn-primary' type="submit" value="Edit">Edit</button>
+                  <button class='btn btn-warning' type="submit" value="Edit">Edit</button>
                   </button>
                 </form>
               </td>
               <td>
                 <form method="POST" action="/urls/<%= url %>/delete">
-                  <button class='btn btn-primary' type="submit" value="Delete">DELETE</button>
+                  <button class='btn btn-danger' type="submit" value="Delete">DELETE</button>
                   </form>
                 </button>
               </td>

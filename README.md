@@ -1,7 +1,19 @@
-## Lighthouse Labs W3 Project
-### Tiny App
+# Lighthouse Labs W3 Project
+## Tiny App
 - cannot see details until user login
 - if logout at any point, user cannot see details
+
+## Final Product
+
+
+
+## Dependencies
+- Node.js
+- Express
+- EJS
+- bcrypt
+- body-parser
+- cookie-session
 
 #### Register
 - must submit email and password

@@ -1,15 +1,17 @@
-const cookieSession = require('cookie-session')
-const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session');
 const express = require('express');
-const app = express();
-const PORT = 8080;
+const methodOverride = require('method-override');
 const { generateRandomString, userIDSeeker, getUserByEmail } = require('./helpers');
+const bcrypt = require('bcryptjs');
+const PORT = 8080;
 
+const app = express();
+app.use(methodOverride('_method'))
 app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'session',
   keys: ["securedKeys"],
-}))
+}));
 app.use(express.urlencoded({ extended: false }));
 
 const urlDatabase = {};
@@ -73,7 +75,9 @@ app.get('/logout', (request, response) => {
 
 app.get("/u/:shortURL", (request, response) => {
   console.log("GET/u/SHORTURL");
-  const longURL = urlDatabase[request.params.shortURL];
+  console.log(request.params.shortURL)
+  console.log(urlDatabase[request.params.shortURL])
+  const longURL = urlDatabase[request.params.shortURL]['longURL'];
   if (!longURL) {
     response.sendStatus(404);
   }
@@ -105,12 +109,12 @@ app.post('/login', (request, response) => {
   console.log("POST/LOGIN");
   for (const existUserId in users) {
     const userID = users[existUserId];
-    const hashedPassword = userID.password
-    const userPassword = request.body.password
-    const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword) // true or false
+    const hashedPassword = userID.password;
+    const userPassword = request.body.password;
+    const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword); // true or false
     if (bcryptPasswordCheck &&
       userID.email === request.body.email) {
-      request.session['user_id'] = existUserId
+      request.session['user_id'] = existUserId;
       return response.redirect('/urls');
     }
   }
@@ -133,7 +137,7 @@ app.post('/register', (request, response) => {
     return response.status(400).redirect('https://httpstatusdogs.com/404-not-found');
   }
   if (getUserByEmail(submittedEmail, users) !== false) {
-    console.log(getUserByEmail(submittedEmail, users))
+    console.log(getUserByEmail(submittedEmail, users));
     return response.status(409).redirect('https://httpstatusdogs.com/409-conflict');
   }
 
@@ -143,15 +147,19 @@ app.post('/register', (request, response) => {
     email: submittedEmail,
     password: hashedPssword
   };
-  request.session['user_id'] = newRandomID
+  request.session['user_id'] = newRandomID;
   response.redirect('/urls');
 });
 
 app.post('/urls/:shortURL/delete', (request, response) => {
   console.log("POST/URLS:SHORTURL,delete");
-  const currentUserID = request.cookies.user_id;
+  console.log("SESSION is: ", request.session.user_id)
+  console.log(urlDatabase)
+  console.log(users)
+  const shortURL = request.params.shortURL;
+  const currentUserID = request.session.user_id;
   if (userIDSeeker(currentUserID, urlDatabase)) {
-    delete urlDatabase[request.params.shortURL];
+    delete urlDatabase[shortURL];
     return response.redirect('/urls');
   } else {
     return response.status(400).redirect('https://http.cat/400');
@@ -160,9 +168,10 @@ app.post('/urls/:shortURL/delete', (request, response) => {
 
 app.post('/urls/:shortURL/edit', (request, response) => {
   console.log("POST/URLS:SHORTURL");
-  const currentUserID = request.cookies.user_id;
+  const shortURL = request.params.shortURL;
+  const currentUserID = request.session.user_id;
   if (userIDSeeker(currentUserID, urlDatabase)) {
-    const shortURL = request.params.shortURL;
+    // const shortURL = request.params.shortURL;
     return response.redirect(`/urls/${shortURL}`);
   } else {
     return response.status(400).redirect('https://http.cat/400');

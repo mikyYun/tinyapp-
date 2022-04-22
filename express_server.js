@@ -22,6 +22,11 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.get('/', (request, response) => {
+  console.log('GET /')
+  response.redirect('/urls');
+});
+
 app.get('/urls', (request, response) => {
   console.log("GET/URLS");
   const userID = request.session['user_id'];
@@ -145,7 +150,6 @@ app.post('/register', (request, response) => {
     return response.status(400).redirect('https://httpstatusdogs.com/404-not-found');
   }
   if (getUserByEmail(submittedEmail, users) !== false) {
-    console.log(getUserByEmail(submittedEmail, users));
     return response.status(409).redirect('https://httpstatusdogs.com/409-conflict');
   }
   // hashedPassword
@@ -156,14 +160,11 @@ app.post('/register', (request, response) => {
     password: hashedPssword
   };
   request.session['user_id'] = newRandomID;
-  response.redirect('/urls');
+  response.redirect('/');
 });
 
 app.post('/urls/:shortURL/delete', (request, response) => {
   console.log("POST/URLS:SHORTURL,delete");
-  console.log("SESSION is: ", request.session.user_id);
-  console.log(urlDatabase);
-  console.log(users);
   const shortURL = request.params.shortURL;
   const currentUserID = request.session.user_id;
   if (userIDSeeker(currentUserID, urlDatabase)) {

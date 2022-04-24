@@ -5,8 +5,8 @@ const serve = require('express-static')
 const { generateRandomString, userIDSeeker, getUserByEmail } = require('./helpers');
 const bcrypt = require('bcryptjs');
 const PORT = 8080;
-
 const app = express();
+
 app.use(methodOverride('_method'));
 app.set("view engine", "ejs");
 app.use(cookieSession({
@@ -49,6 +49,16 @@ app.get("/urls/new", (request, response) => {
     urls: urlDatabase,
     user: user
   };
+  response.render("urls_new", templateVars);
+  console.log()
+});
+
+app.get("/urls/:id", (request, response) => {
+  console.log("GET/URLS:ID");
+  if (!request.session.user_id) {
+    return response.send("'/login'");
+    // return response.redirect('/login');
+  }
   response.render("urls_new", templateVars);
   console.log()
 });
@@ -100,6 +110,16 @@ app.get('/register', (request, response) => {
   response.render("urls_registration", templateVars);
 });
 
+app.get('/invalid', (request, response) => {
+  console.log('GET/INVALID REGISTRATION')
+  const userID = request.session['user_id'];
+  const user = users[userID];
+  const templateVars = {
+    user: user
+  };
+  response.render('urls_invalid', templateVars)
+})
+
 app.post('/urls', (request, response) => {
   const userID = request.session.user_id;
   const newLongURL = request.body.longURL;
@@ -113,18 +133,29 @@ app.post('/urls', (request, response) => {
 
 app.post('/login', (request, response) => {
   console.log("POST/LOGIN");
+  // if registered users are 0, redirect to register page
   if (Object.keys(users).length === 0) {
-    return response.redirect('/register');
+    alert("NEW USER")
+    // setTimeout(() => {
+
+      return response.redirect('invalid');
+    // }, 3000)
   }
+
+  // email & password check
   for (const existUserId in users) {
     const userID = users[existUserId];
     const hashedPassword = userID.password;
     const userPassword = request.body.password;
     // true or false
     const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword); 
+    // if submitted email are not in the database, go to register page
     if (userID.email !== request.body.email) {
-    return response.redirect('/register');
+    alert("NEW USER")
+
+    return response.redirect('invalid');
     }
+    // if email & password both correct, redirect to main page
     if (bcryptPasswordCheck &&
       userID.email === request.body.email) {
       request.session['user_id'] = existUserId;
@@ -146,12 +177,16 @@ app.post('/register', (request, response) => {
   const newRandomID = generateRandomString();
   const submittedEmail = request.body.email;
   const submittedPassword = request.body.password;
+
+  // if invalid email or password, let client know invalid information
   if (!submittedEmail || !submittedPassword) {
-    return response.status(400).redirect('https://httpstatusdogs.com/404-not-found');
+    return response.redirect('invalid')
   }
+  // if submitted email is in the server's database, 
   if (getUserByEmail(submittedEmail, users) !== false) {
-    return response.status(409).redirect('https://httpstatusdogs.com/409-conflict');
+    return response.status(409).redirect('invalid');
   }
+
   // hashedPassword
   const hashedPssword = bcrypt.hashSync(submittedPassword, 10);
   users[newRandomID] = {
@@ -160,6 +195,7 @@ app.post('/register', (request, response) => {
     password: hashedPssword
   };
   request.session['user_id'] = newRandomID;
+  // passed information goes '/'
   response.redirect('/');
 });
 
@@ -180,7 +216,6 @@ app.post('/urls/:shortURL/edit', (request, response) => {
   const shortURL = request.params.shortURL;
   const currentUserID = request.session.user_id;
   if (userIDSeeker(currentUserID, urlDatabase)) {
-    // const shortURL = request.params.shortURL;
     return response.redirect(`/urls/${shortURL}`);
   } else {
     return response.status(400).redirect('https://http.cat/400');

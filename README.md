@@ -1,7 +1,9 @@
 # Lighthouse Labs W3 Project
 ## Tiny App
-- cannot see details until user login
-- if logout at any point, user cannot see details
+- Users can save their own short-cut url
+- Users can update their url lists
+- Non-registered users cannot see any pages without register / login
+
 
 ## Final Product
 Block to Unknown Client
@@ -24,6 +26,13 @@ Created Urls
 - bcrypt
 - body-parser
 - cookie-session
+- method-odvrride
+
+## Getting Started
+
+- Install all dependencies (using the 'npm install' command)
+- Run the development web server using the 'node express_server.js' command
+
 
 #### Register
 - must submit email and password

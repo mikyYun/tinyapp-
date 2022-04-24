@@ -25,37 +25,40 @@
           </thead>
           <tbody>
             <% for(let url in urls) { %>
-              <tr>
-                <td>
-                  <%= url %>
-                </td>
-                <td>
-                  <%= urls[url].longURL %>
-                </td>
-                <td>
-                  <form method="POST" action="/urls/<%= url %>/edit">
-                    <button class='btn btn-warning' type="submit" value="Edit">Edit</button>
+              <% if (urls[url].userID === user.id) { %>
+                <tr>
+                  <td>
+                    <%= url %>
+                  </td>
+                  <td>
+                    <%= urls[url].longURL %>
+                  </td>
+                  <td>
+                    <form method="POST" action="/urls/<%= url %>/edit">
+                      <button class='btn btn-warning' type="submit" value="Edit">Edit</button>
+                      </button>
+                    </form>
+                  </td>
+                  <td>
+                    <form method="POST" action="/urls/<%= url %>/delete">
+                      <button class='btn btn-danger' type="submit" value="Delete">DELETE</button>
+                    </form>
                     </button>
-                  </form>
-                </td>
-                <td>
-                  <form method="POST" action="/urls/<%= url %>/delete">
-                    <button class='btn btn-danger' type="submit" value="Delete">DELETE</button>
-                  </form>
-                  </button>
-                </td>
-              </tr>
+                  </td>
+                </tr>
               <% } %>
+            <% } %>
           </tbody>
         </table>
         <% } else { %>
-          <p style="text-align: center;">
+          <div class="alert alert-warning" role="alert" style="text-align: center;">Registered and Loged in User Only</div>
+          <p style="text-align: center; ">
             Hello, Unkown. Please Do Register Or Login To See Details
           </p>
           <div style="text-align: center;">
             <img src="/images/registerOrLogin.gif" alt="Please Register Or Login First">
           </div>
-          <% } %>
+        <% } %>
     </main>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"

@@ -6,6 +6,19 @@ const { generateRandomString, userIDSeeker, getUserByEmail } = require('./helper
 const bcrypt = require('bcryptjs');
 const PORT = 8080;
 const app = express();
+//////////////////////////////////////////////////////
+
+// login and out OK
+// login with diffrent email, has smail url
+// after 400 error (edit or delete other's), cannot login
+// try register or login with exist email, error and cant login and register
+
+
+
+
+//////////////////////////////////////////////////////
+
+
 
 app.use(methodOverride('_method'));
 app.set("view engine", "ejs");
@@ -18,9 +31,6 @@ app.use(express.static('public'))
 
 const urlDatabase = {};
 const users = {};
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 app.get('/', (request, response) => {
   console.log('GET /')
@@ -53,18 +63,11 @@ app.get("/urls/new", (request, response) => {
   console.log()
 });
 
-app.get("/urls/:id", (request, response) => {
-  console.log("GET/URLS:ID");
-  if (!request.session.user_id) {
-    return response.send("'/login'");
-    // return response.redirect('/login');
-  }
-  response.render("urls_new", templateVars);
-  console.log()
-});
-
 app.get("/urls/:shortURL", (request, response) => {
   console.log("GET/URLS:SHORTURL");
+  if (!request.session.user_id) {
+    return response.redirect('/login');
+  }
   const userID = request.session['user_id'];
   const user = users[userID];
   const shorturl = request.params.shortURL;
@@ -135,11 +138,7 @@ app.post('/login', (request, response) => {
   console.log("POST/LOGIN");
   // if registered users are 0, redirect to register page
   if (Object.keys(users).length === 0) {
-    alert("NEW USER")
-    // setTimeout(() => {
-
       return response.redirect('invalid');
-    // }, 3000)
   }
 
   // email & password check
@@ -151,9 +150,7 @@ app.post('/login', (request, response) => {
     const bcryptPasswordCheck = bcrypt.compareSync(userPassword, hashedPassword); 
     // if submitted email are not in the database, go to register page
     if (userID.email !== request.body.email) {
-    alert("NEW USER")
-
-    return response.redirect('invalid');
+      return response.redirect('invalid');
     }
     // if email & password both correct, redirect to main page
     if (bcryptPasswordCheck &&
@@ -199,6 +196,24 @@ app.post('/register', (request, response) => {
   response.redirect('/');
 });
 
+app.post('/urls/:shortURL', (request, response) => {
+  console.log("POST/URLS:ID");
+  const shortURL = request.params.shortURL;
+  const newLongURL = request.body.longURL;
+  const newShortURL = request.body.shortURL;
+  if (!newLongURL && !newShortURL) {
+    return response.redirect('/urls')
+  }
+  if (newLongURL) {
+    urlDatabase[shortURL]['longURL'] = newLongURL;
+  }
+  if (newShortURL) {
+    urlDatabase[newShortURL] = urlDatabase[shortURL]
+    delete urlDatabase[shortURL]
+  }
+  return response.redirect('/urls');
+});
+
 app.post('/urls/:shortURL/delete', (request, response) => {
   console.log("POST/URLS:SHORTURL,delete");
   const shortURL = request.params.shortURL;
@@ -212,20 +227,17 @@ app.post('/urls/:shortURL/delete', (request, response) => {
 });
 
 app.post('/urls/:shortURL/edit', (request, response) => {
-  console.log("POST/URLS:SHORTURL");
+  console.log("POST/URLS:SHORTURL:EDIT");
   const shortURL = request.params.shortURL;
   const currentUserID = request.session.user_id;
   if (userIDSeeker(currentUserID, urlDatabase)) {
+    // return response.redirect(`/urls/${shortURL}`);
     return response.redirect(`/urls/${shortURL}`);
   } else {
     return response.status(400).redirect('https://http.cat/400');
   }
 });
 
-app.post('/urls/:id', (request, response) => {
-  console.log("POST/URLS:ID");
-  const shortURL = request.params.id;
-  const longURL = request.body.longURL;
-  urlDatabase[shortURL]['longURL'] = longURL;
-  response.redirect('/urls/');
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });

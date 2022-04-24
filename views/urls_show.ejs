@@ -23,8 +23,15 @@
           <div class="card-footer">
             <h3>Edit</h3>
             <form method="POST" action="/urls/<%= shortURL %>">
-              <label for="newURL">New URL</label>
-              <input type="text" name="longURL">
+              <label for="newLongURL">New Long URL : </label>
+              <input type="url" name="longURL" id="typeURL">
+              <!-- <button class='btn btn-primary' type="submit" value="Submit">Submit</button> -->
+            <!-- </form>
+            <form method="POST" action="/urls/<%= shortURL %>"> -->
+              <br>
+              <label for="newShortURL">New Short URL : </label>
+              <input type="text" name="shortURL" maxlength="6" minlength="6">
+              <br>
               <button class='btn btn-primary' type="submit" value="Submit">Submit</button>
             </form>
           </div>
